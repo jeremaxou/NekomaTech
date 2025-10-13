@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Check repository structure
+      run: |
+        echo "Repository structure:"
+        ls -la
+        echo "Checking for common project files..."
+        
+    - name: Validate README
+      run: |
+        if [ -f "README.md" ]; then
+          echo "✓ README.md exists"
+        else
+          echo "✗ README.md missing"
+          exit 1
+        fi
