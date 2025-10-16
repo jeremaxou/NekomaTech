@@ -13,7 +13,7 @@ class Trajectory:
         self.is_up = False
         self.is_down = False
         self.is_over = False
-        self.left = False
+        self.was_left = False
         self.is_precise = False
         self.is_high = False
         self.no_ball_frame = 0
@@ -34,6 +34,9 @@ class Trajectory:
     def update_found(self):
         next_point = self.highest_point()
         self.update_next_point(next_point)
+        self.update_all()
+    
+    def update_all(self):    
         self.update_state()
         if self.is_over:
             return
@@ -44,33 +47,34 @@ class Trajectory:
 
     
     def update_state(self):
-        self.update_is_over()
         self.update_is_up()
         self.update_is_down()
+        self.update_is_over()
         
     
     def update_is_up(self):
-        if not self.is_up and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y:
+        print(len(self.points))
+        if not self.is_up and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y and (self.is_left() or self.is_right()):
             self.is_up = True
+            self.was_left = self.is_left()
             self.start_traj = len(self.points) - 2
-            self.left = self.is_left()
     
     def update_is_down(self):
         if self.is_up and self.points[-3].y < self.points[-2].y and self.points[-2].y < self.points[-1].y:
             self.is_down = True
         
     def update_is_over(self):
-        if self.is_down and len(self.points) > 2 and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y:
+        if self.is_down and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y:
             self.is_over = True
             self.points.remove(self.points[-1])
             self.points.remove(self.points[-1])
 
-        if self.horizontal_flag and ((self.left and self.is_right() and self.points[-1].x > self.points[-3].x + 20) or (not self.left and self.is_left() and self.points[-1].x < self.points[-3].x - 20)):
-            self.points.remove(self.points[-1])
-            self.points.remove(self.points[-1])
+        if ((self.was_left and self.is_right()) or (not self.was_left and self.is_left())):#and self.horizontal_flag:
             self.is_over = True
-        
-        if self.no_ball_frame > 10:
+            self.points.remove(self.points[-1])
+            self.points.remove(self.points[-1])
+
+        if (self.is_up and self.no_ball_frame > 10) or (not self.is_up and self.no_ball_frame > 1):
             self.is_over = True
         
         '''if self.is_up and len(self.points) > 5 and self.poly[0] < 0:
@@ -99,27 +103,28 @@ class Trajectory:
             self.poly = np.polyfit([self.points[i].x for i in range(self.start_traj, len(self.points))], [self.points[i].y for i in range(self.start_traj, len(self.points))], 2, rcond=1e-5)
 
         self.parabola = []
-        liste = np.linspace(self.points[self.start_traj].x, self.points[-1].x)
+        liste = np.linspace(self.points[self.start_traj].x, self.points[-1].x, int(abs(self.points[-1].x - self.points[self.start_traj].x))+1)
         liste = liste.tolist()
         dx = 1
-        while not self.left and self.eva_poly(liste[0] - (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
+        while not self.was_left and self.eva_poly(liste[0] - (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
             liste.insert(0, liste[0] - dx)
             dx += 1
         dx = 1
-        while self.left and self.eva_poly(liste[0] + (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
+        while self.was_left and self.eva_poly(liste[0] + (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
             liste.insert(0, liste[0] + dx)
             dx += 1
         for i in range(len(liste)):
             self.parabola.append(Point(liste[i], self.eva_poly(liste[i])))
 
     def update_info(self):
-        if not self.horizontal_flag:
+        '''if not self.horizontal_flag:
             if self.is_left():
-                self.left = self.is_left()
+                self.was_left = self.is_left()
                 self.horizontal_flag = True
             if self.is_right():
-                self.left = not self.is_right()
-                self.horizontal_flag = True
+                self.was_left = not self.is_right()
+                self.horizontal_flag = True'''
+
         x_box_1 = np.linspace(self.param.get_point_x("wind_l_tl"), self.param.get_point_x("wind_l_br"), 100)
         x_box_2 = np.linspace(self.param.get_point_x("wind_r_tl"), self.param.get_point_x("wind_r_br"), 100)
         x_box = np.concatenate((x_box_1, x_box_2))
@@ -149,7 +154,7 @@ class Trajectory:
         return Point(mini_pt[0], mini_pt[1])
 
     def is_point_not_valid(self, point, limit):
-        return point.pos() == [0, 0] or point.y > self.param.get_point_y("net") or self.distance(point, self.points[-1]) > limit
+        return len(self.all_ball) == 0 or point.y > self.param.get_point_y("net") or self.distance(point, self.points[-1]) > limit
 
     def update_not_found(self):
         for point in self.all_ball:
@@ -160,9 +165,10 @@ class Trajectory:
         for p1 in self.points_before:
             for p2 in self.points_before:
                 for p3 in self.points_before:
-                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 300 :
+                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 100 :
                         self.ball_found = True
                         self.points = [p1, p2, p3]
+                        self.update_all()
                         return
     
     def is_different(self, p1, p2):

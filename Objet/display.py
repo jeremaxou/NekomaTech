@@ -32,7 +32,7 @@ class Display():
         if len(self.traj.parabola) >= 3 :
             for i in range(len(self.traj.parabola)-1):
                 #cv2.circle(self.frame, self.traj.parabola[i].pos_int(), 3, (0, 0, 0), 3)
-                cv2.line(self.frame, self.traj.parabola[i].pos_int(), self.traj.parabola[i+1].pos_int(), self.traj.color, 2, cv2.LINE_4)
+                cv2.line(self.frame, self.traj.parabola[i].pos_int(), self.traj.parabola[i+1].pos_int(), self.traj.color, 2, lineType=cv2.LINE_AA)
 
     def unprocessed_frame_copy(self):
         return self.unprocessed_frame.copy()
@@ -47,7 +47,7 @@ class Display():
         
     
     def draw_point(self, point):
-        cv2.circle(self.frame, point.pos_int(), 3, point.color, 3)
+        cv2.circle(self.frame, point.pos_int(), 3, point.color, 3, lineType=cv2.LINE_AA)
 
     def draw_shape(self, brightness = 1, param_list = ["net", "ant", "wind", "height", "bar"]):
         def get_point(name):
@@ -86,10 +86,10 @@ class Display():
 
     
     def draw_line(self, point1, point2, color, thickness = 2):
-        cv2.line(self.frame, point1.pos_int(), point2.pos_int(), color, thickness, cv2.LINE_4)
+        cv2.line(self.frame, point1.pos_int(), point2.pos_int(), color, thickness, lineType=cv2.LINE_AA)
     
     def draw_line_x(self, point, color):
-        cv2.line(self.frame, (0, point.pos_int()[1]), (self.param.width, point.pos_int()[1]), color, 2, cv2.LINE_4)
+        cv2.line(self.frame, (0, point.pos_int()[1]), (self.param.width, point.pos_int()[1]), color, 2, lineType=cv2.LINE_AA)
     
     def draw_rectangle(self, point1, point2, point3, point4, color):
         self.draw_line(point1, point2, color)
@@ -99,13 +99,20 @@ class Display():
     
     def draw_balls(self, list_ball):
         for ball in list_ball:
-            cv2.circle(self.frame, (int(ball[0]), int(ball[1])), int(ball[2]), (0, 0, 255), 2)
+            cv2.circle(self.frame, (int(ball[0]), int(ball[1])), int(ball[2]), (0, 0, 255), 2, lineType=cv2.LINE_AA)
     
     def display(self, brightness, list_ball, current_frame = None):
         self.draw_shape(brightness)
         self.draw_all_points(brightness)     
         self.draw_traj()  
-        self.draw_balls(list_ball)
+        #self.draw_balls(list_ball)
+        cv2.putText(self.frame, str(len(self.traj.points)) +" "+ str(self.traj.start_traj) + " " + str(self.traj.no_ball_frame), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        '''for i in range(len(self.traj.points)):
+            if i < self.traj.start_traj or not self.traj.is_up:
+                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (0, 0, 255), 3, lineType=cv2.LINE_AA)
+            else :
+                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (255, 255, 255), 3, lineType=cv2.LINE_AA)'''
+
         #cv2.putText(self.frame, f'Frame: {current_frame}', (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow('main', self.frame)
     
