@@ -8,6 +8,8 @@ class ImageProcessing:
         '''construit l'objet avec des paramètres et une frame d'entrée'''
         self.param = parameters
         self.ia = ia
+        self.prev_frame = np.zeros((self.param.height, self.param.width, 3), dtype=np.uint8)
+        self.next_frame = np.zeros((self.param.height, self.param.width, 3), dtype=np.uint8)
         if self.ia:
             self.best_ball = [[0, 0]]
             from ultralytics import YOLO
@@ -58,15 +60,14 @@ class ImageProcessing:
         self.open_if_openable(5)
         contours, _ = cv2.findContours(self.processed_frame_difference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)      
         all_ball = self.find_circles(contours)
-
-        self.update_prev_frame(self.next_frame.copy())
         return all_ball
         
     def update_next_frame(self, frame):
-        self.next_frame = frame
+        self.update_prev_frame(self.next_frame.copy())
+        self.next_frame = np.copy(frame)
     
     def update_prev_frame(self, frame):
-        self.prev_frame = frame
+        self.prev_frame = np.copy(frame)
 
     def frame_difference(self):
         '''actualise la différence de frame'''
@@ -79,7 +80,7 @@ class ImageProcessing:
         def get_pos(name):
             return self.param.get_point(name).pos_int()
         # Extraire la région d'intérêt (ROI)
-        roi = self.unprocessed_frame_difference[0:min(self.param.height, get_pos("net")[1]+50), max(0, get_pos("ant_tl")[0]-50):min(self.param.width, get_pos("ant_tr")[0]+50)]
+        roi = self.unprocessed_frame_difference[0:min(self.param.height, get_pos("net")[1]), max(0, get_pos("ant_tl")[0]-50):min(self.param.width, get_pos("ant_tr")[0]+50)]
 
         # Appliquer l'ouverture morphologique uniquement sur la ROI
         roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
@@ -87,7 +88,7 @@ class ImageProcessing:
 
         # Remplacer la ROI dans l'image originale
         self.processed_frame_difference = np.zeros_like(self.unprocessed_frame_difference)
-        self.processed_frame_difference[0:min(self.param.height, get_pos("net")[1]+50), max(0, get_pos("ant_tl")[0]-50):min(self.param.width, get_pos("ant_tr")[0]+50)] = roi
+        self.processed_frame_difference[0:min(self.param.height, get_pos("net")[1]), max(0, get_pos("ant_tl")[0]-50):min(self.param.width, get_pos("ant_tr")[0]+50)] = roi
 
     def open2(self):
         #frame = cv2.dilate(frame, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (35, 35)))
@@ -111,12 +112,12 @@ class ImageProcessing:
             (x, y), radius = cv2.minEnclosingCircle(contour)
             center = (int(x), int(y))
             radius = int(radius)
+            l.append([x, y, radius])
 
             # Vérification si le cercle est dans la région d'intérêt
-            if (y < self.param.get_point_y("net") - 
-                (self.param.get_point_y("net") - self.param.get_point_y("ant_tl")) / 5 and 
-                self.param.get_point_x("ant_tl") < x < self.param.get_point_x("ant_tr")):
-                l.append([x, y])
+            # if (y < self.param.get_point_y("net") - 
+            #     (self.param.get_point_y("net") - self.param.get_point_y("ant_tl")) / 5 and 
+            #     self.param.get_point_x("ant_tl") < x < self.param.get_point_x("ant_tr")):
         return l
 
 

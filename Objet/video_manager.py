@@ -1,14 +1,11 @@
 import cv2
 import time  
 from moviepy import VideoFileClip
-
-import sys
-import os
-sys.stdout = open(os.devnull, "w")
+import os 
+import sys 
+sys.stdout = open(os.devnull, "w") 
 import pygame
 sys.stdout = sys.__stdout__
-
-import pygame
 import subprocess
 
 
@@ -17,6 +14,7 @@ class VideoManager:
     def __init__(self, video_file, parameters, sound, video_type):
         self.video_file = video_file    
         self.video_type = video_type
+        self.new_frame_treated = True
         if self.video_type == "video":
             self.cap = cv2.VideoCapture(self.video_file)
         elif self.video_type == "direct":
@@ -26,14 +24,15 @@ class VideoManager:
             self.index = 0
             self.cap = cv2.VideoCapture(self.list_cameras[self.index])
 
-        self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+        #self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+        self.fps = 30
         self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.over = False
         self.parameters = parameters
 
         self.start_time = time.time()
         self.current_time = time.time()
-        self.time = self.current_time - self.start_time
+        self.time_video = self.current_time - self.start_time
 
         self.sound = sound
 
@@ -105,18 +104,22 @@ class VideoManager:
 
         if self.video_type == "video":
             self.current_time = time.time()
-            self.time = self.current_time - self.start_time
+            self.time_video = self.current_time - self.start_time
             self.current_frame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            frame_targeted = int(self.time * self.fps)
+            frame_targeted = int(self.time_video * self.fps)
             jump_frame = frame_targeted - self.current_frame
 
+            self.new_frame_treated = False
             for _ in range(jump_frame):
                 ret, self.frame = self.cap.read()
                 if not ret:
                     self.over = True
                     break
-                self.frame = cv2.resize(self.frame, (self.parameters.width, self.parameters.height))
+                self.new_frame_treated = True
                 self.current_frame += 1  
+
+            if not self.over:
+                self.frame = cv2.resize(self.frame, (self.parameters.width, self.parameters.height))
         
         elif self.video_type == "direct":
             self.update_frame_easy()

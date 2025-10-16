@@ -3,10 +3,12 @@ from point import Point, Point_param
 import cv2
 import numpy as np
 import subprocess
+import screeninfo
 
 
 class Parameters:
     def __init__(self):
+        screeninfo.get_monitors()[0]
         cv2.namedWindow('main', cv2.WINDOW_NORMAL)
         cv2.setWindowProperty('main', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         # Obtenir la taille de l'écran

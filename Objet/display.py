@@ -3,6 +3,7 @@ import parameters
 import numpy as np
 from trajectory import Trajectory
 import subprocess
+import time
 
 class Display():
     def __init__(self, parameters):
@@ -11,6 +12,10 @@ class Display():
     def load_frame(self, frame):
         self.unprocessed_frame = np.copy(frame)
         self.frame = np.copy(frame)
+    
+    def load_time(self, time_video, start_time):
+        self.time_video = time_video
+        self.start_time = start_time
     
     def load_traj(self, traj):
         self.traj = traj
@@ -91,11 +96,17 @@ class Display():
         self.draw_line(point2, point3, color)
         self.draw_line(point3, point4, color)
         self.draw_line(point4, point1, color)
-
-    def display(self, brightness):
+    
+    def draw_balls(self, list_ball):
+        for ball in list_ball:
+            cv2.circle(self.frame, (int(ball[0]), int(ball[1])), int(ball[2]), (0, 0, 255), 2)
+    
+    def display(self, brightness, list_ball, current_frame = None):
         self.draw_shape(brightness)
         self.draw_all_points(brightness)     
         self.draw_traj()  
+        self.draw_balls(list_ball)
+        #cv2.putText(self.frame, f'Frame: {current_frame}', (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow('main', self.frame)
     
     
