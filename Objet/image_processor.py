@@ -10,6 +10,8 @@ class ImageProcessing:
         self.ia = ia
         self.prev_frame = np.zeros((self.param.height, self.param.width, 3), dtype=np.uint8)
         self.next_frame = np.zeros((self.param.height, self.param.width, 3), dtype=np.uint8)
+        self.fgbg = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=70, detectShadows=False)
+
         if self.ia:
             self.best_ball = [[0, 0]]
             from ultralytics import YOLO
@@ -25,7 +27,8 @@ class ImageProcessing:
         self.update_next_frame(next_frame)
         if self.ia:
             return self.ia_method()
-        return self.difference_method()
+        #return self.difference_method()
+        return self.background_method()
     
     def ia_method(self):
         # Faire une prédiction sur une image
@@ -57,7 +60,15 @@ class ImageProcessing:
     def difference_method(self):
         '''Traite une paire de frames pour détecter les balles''' 
         self.frame_difference()
-        self.open_if_openable(5)
+        self.open_if_openable(5, (3, 3), (23, 23))
+        contours, _ = cv2.findContours(self.processed_frame_difference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)      
+        all_ball = self.find_circles(contours)
+        return all_ball
+
+    def background_method(self):
+        '''Traite une paire de frames pour détecter les balles''' 
+        self.background_difference()
+        self.open_if_openable(10, (5, 5), (23, 23))
         contours, _ = cv2.findContours(self.processed_frame_difference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)      
         all_ball = self.find_circles(contours)
         return all_ball
@@ -75,16 +86,20 @@ class ImageProcessing:
         gray_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray_diff, 30, 255, cv2.THRESH_BINARY)
         self.unprocessed_frame_difference = thresh
+    
+    def background_difference(self):
+        fgmask = self.fgbg.apply(self.next_frame)
+        self.unprocessed_frame_difference = fgmask
 
-    def open(self):
+    def open(self, ero, dila):
         def get_pos(name):
             return self.param.get_point(name).pos_int()
         # Extraire la région d'intérêt (ROI)
         roi = self.unprocessed_frame_difference[0:min(self.param.height, get_pos("net")[1]), max(0, get_pos("ant_tl")[0]-50):min(self.param.width, get_pos("ant_tr")[0]+50)]
 
         # Appliquer l'ouverture morphologique uniquement sur la ROI
-        roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
-        roi = cv2.dilate(roi, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)))
+        roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, ero))
+        roi = cv2.dilate(roi, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, dila))
 
         # Remplacer la ROI dans l'image originale
         self.processed_frame_difference = np.zeros_like(self.unprocessed_frame_difference)
@@ -96,12 +111,12 @@ class ImageProcessing:
         frame = cv2.dilate(frame, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)))
         self.processed_frame_difference = frame
 
-    def open_if_openable(self, white_thresh):
+    def open_if_openable(self, white_thresh, ero, dila):
         total_pixels = self.unprocessed_frame_difference.size
         white_pixels = cv2.countNonZero(self.unprocessed_frame_difference)
         white_percentage = (white_pixels / total_pixels) * 100
         if white_percentage < white_thresh:
-            self.open()
+            self.open(ero, dila)
         else:
             self.processed_frame_difference = np.zeros_like(self.unprocessed_frame_difference)
     

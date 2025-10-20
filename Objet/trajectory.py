@@ -28,6 +28,7 @@ class Trajectory:
         self.all_ball = all_ball
         if not self.ball_found:
             self.update_not_found()
+            #self.update_not_found_easy()
         else:
             self.update_found()
     
@@ -53,7 +54,6 @@ class Trajectory:
         
     
     def update_is_up(self):
-        print(len(self.points))
         if not self.is_up and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y and (self.is_left() or self.is_right()):
             self.is_up = True
             self.was_left = self.is_left()
@@ -68,14 +68,23 @@ class Trajectory:
             self.is_over = True
             self.points.remove(self.points[-1])
             self.points.remove(self.points[-1])
+            return
 
         if ((self.was_left and self.is_right()) or (not self.was_left and self.is_left())):#and self.horizontal_flag:
             self.is_over = True
             self.points.remove(self.points[-1])
             self.points.remove(self.points[-1])
+            return
 
-        if (self.is_up and self.no_ball_frame > 10) or (not self.is_up and self.no_ball_frame > 1):
+        #if (self.is_up and self.no_ball_frame > 10) or (not self.is_up and self.no_ball_frame > 1):
+        if self.no_ball_frame > 1:
             self.is_over = True
+            return
+        
+        '''if self.is_up and ((self.was_left and self.points[-1].x > self.points[-2].x + 10) or (not self.was_left and self.points[-1].x < self.points[-2].x - 10)):
+            self.is_over = True
+            self.points.remove(self.points[-1])
+            return'''
         
         '''if self.is_up and len(self.points) > 5 and self.poly[0] < 0:
             self.is_over = True
@@ -154,18 +163,27 @@ class Trajectory:
         return Point(mini_pt[0], mini_pt[1])
 
     def is_point_not_valid(self, point, limit):
-        return len(self.all_ball) == 0 or point.y > self.param.get_point_y("net") or self.distance(point, self.points[-1]) > limit
+        return len(self.all_ball) == 0 or self.distance(point, self.points[-1]) > limit
 
     def update_not_found(self):
         for point in self.all_ball:
             self.points_before.append(Point(point[0], point[1]))
         self.find_ball()
     
+    def update_not_found_easy(self):
+        for point in self.all_ball:
+            self.points_before.append(Point(point[0], point[1]))
+            if len(self.points_before) >= 3:
+                self.ball_found = True
+                self.points = self.points_before
+                self.update_all()
+                return
+    
     def find_ball(self):
         for p1 in self.points_before:
             for p2 in self.points_before:
                 for p3 in self.points_before:
-                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 100 :
+                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 200 :
                         self.ball_found = True
                         self.points = [p1, p2, p3]
                         self.update_all()

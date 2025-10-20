@@ -44,7 +44,7 @@ class Main:
             self.ui.move_parameters()    
 
             if self.mode == "video":
-                self.vid_mana.update_frame()
+                self.vid_mana.update_frame_easy()
                 if self.vid_mana.over:
                     break
                 if self.vid_mana.new_frame_treated or flag:
@@ -60,7 +60,7 @@ class Main:
                 darken_factor = 0.5 
                 self.display.frame = (self.display.frame * darken_factor).astype(np.uint8)
 
-            self.display.load_frame(self.im_proc.prev_frame)
+            self.display.load_frame(self.im_proc.next_frame)
             self.display.display(self.ui.brightness, all_ball, self.vid_mana.current_frame)
             #self.session.load(self.display.frame)
             #cv2.imshow('main', im_proc.processed_frame_difference)
@@ -68,7 +68,7 @@ class Main:
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main = Main("vid4.mp4", "video")
+    main = Main("vid5.mp4", "video")
     main.run()
 
 def is_ready():

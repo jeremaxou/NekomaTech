@@ -186,13 +186,13 @@ class UI:
         def update_ref_list(name):
             for name in name:
                 update_ref(name)
-        def is_left(name1, name2, margin):
+        def is_left(name1, name2):
             return get_point(name1).x < get_point(name2).x + 50
-        def is_right(name1, name2, margin):
+        def is_right(name1, name2):
             return get_point(name1).x > get_point(name2).x - 50 
-        def is_over(name1, name2, margin):
+        def is_over(name1, name2):
             return get_point(name1).y < get_point(name2).y + 50
-        def is_under(name1, name2, margin):
+        def is_under(name1, name2):
             return get_point(name1).y > get_point(name2).y - 50
         def put_left(name1, name2):
             get_point(name1).x = get_point(name2).x - 50

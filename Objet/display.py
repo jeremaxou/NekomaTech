@@ -101,18 +101,20 @@ class Display():
         for ball in list_ball:
             cv2.circle(self.frame, (int(ball[0]), int(ball[1])), int(ball[2]), (0, 0, 255), 2, lineType=cv2.LINE_AA)
     
+    def draw_point_traj(self):
+        for i in range(len(self.traj.points)):
+            if i < self.traj.start_traj or not self.traj.is_up:
+                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (0, 0, 255), 3, lineType=cv2.LINE_AA)
+            else :
+                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (255, 255, 255), 3, lineType=cv2.LINE_AA)
+    
     def display(self, brightness, list_ball, current_frame = None):
         self.draw_shape(brightness)
         self.draw_all_points(brightness)     
         self.draw_traj()  
         #self.draw_balls(list_ball)
-        cv2.putText(self.frame, str(len(self.traj.points)) +" "+ str(self.traj.start_traj) + " " + str(self.traj.no_ball_frame), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        '''for i in range(len(self.traj.points)):
-            if i < self.traj.start_traj or not self.traj.is_up:
-                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (0, 0, 255), 3, lineType=cv2.LINE_AA)
-            else :
-                cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (255, 255, 255), 3, lineType=cv2.LINE_AA)'''
-
+        #self.draw_point_traj()
+        #cv2.putText(self.frame, str(len(self.traj.points)) +" "+ str(self.traj.start_traj) + " " + str(self.traj.no_ball_frame), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         #cv2.putText(self.frame, f'Frame: {current_frame}', (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow('main', self.frame)
     
