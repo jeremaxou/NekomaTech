@@ -44,13 +44,13 @@ class Main:
             self.ui.move_parameters()    
 
             if self.mode == "video":
-                self.vid_mana.update_frame_easy()
+                self.vid_mana.update_frame()
                 if self.vid_mana.over:
                     break
                 if self.vid_mana.new_frame_treated or flag:
                     flag = False
                     all_ball = self.im_proc.get_all_ball(self.vid_mana.frame)
-                    self.traj.update(all_ball) 
+                    self.traj.update(all_ball, self.vid_mana.current_frame) 
                     if self.traj.is_over:
                         self.session.load_traj(self.traj)
                         self.traj = Trajectory(self.param)
@@ -68,7 +68,7 @@ class Main:
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main = Main("vid5.mp4", "video")
+    main = Main("vid3.mp4", "video")
     main.run()
 
 def is_ready():

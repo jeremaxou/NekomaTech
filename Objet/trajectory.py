@@ -24,8 +24,9 @@ class Trajectory:
         self.horizontal_flag = False
 
     
-    def update(self, all_ball):
+    def update(self, all_ball, current_frame):
         self.all_ball = all_ball
+        self.current_frame = current_frame
         if not self.ball_found:
             self.update_not_found()
             #self.update_not_found_easy()
@@ -167,23 +168,47 @@ class Trajectory:
 
     def update_not_found(self):
         for point in self.all_ball:
-            self.points_before.append(Point(point[0], point[1]))
+            self.points_before.append([Point(point[0], point[1]), self.current_frame])
         self.find_ball()
     
     def update_not_found_easy(self):
         for point in self.all_ball:
-            self.points_before.append(Point(point[0], point[1]))
+            self.points_before.append([Point(point[0], point[1]), self.current_frame])
             if len(self.points_before) >= 3:
                 self.ball_found = True
                 self.points = self.points_before
                 self.update_all()
                 return
-    
+            
+    def angle_3pts(self, A, B, C):
+        """
+        Calcule l'angle (en degrés) formé par trois objets points A, B, C
+        où chaque point a des attributs .x et .y
+        et B est le sommet (le point central).
+        """
+        # Convertir en vecteurs numpy
+        AB = np.array([A.x - B.x, A.y - B.y])
+        CB = np.array([C.x - B.x, C.y - B.y])
+
+        # Produit scalaire et normes
+        dot = np.dot(AB, CB)
+        norm = np.linalg.norm(AB) * np.linalg.norm(CB)
+        if norm == 0:
+            return None  # si deux points sont identiques
+
+        # Calcul de l'angle
+        cos_angle = np.clip(dot / norm, -1.0, 1.0)
+        angle = np.degrees(np.arccos(cos_angle))
+        return angle
+
     def find_ball(self):
-        for p1 in self.points_before:
-            for p2 in self.points_before:
-                for p3 in self.points_before:
-                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 200 :
+        if len(self.points_before) < 3:
+            return
+        for po1 in self.points_before:
+            for po2 in self.points_before:
+                for po3 in self.points_before:
+                    p1, p2, p3, t1, t2, t3 = po1[0], po2[0], po3[0], po1[1], po2[1], po3[1]
+                    if self.is_different(p1, p2) and self.is_different(p2, p3) and self.is_different(p1, p3) and self.distance(p1, p2) + self.distance(p2, p3) < 200 and t1 < t2 < t3 and ((p1.y < p2.y < p3.y) or (p1.y > p2.y > p3.y)) and (self.angle_3pts(p1, p2, p3) < 20 or abs(180 - self.angle_3pts(p1, p2, p3)) < 20):
                         self.ball_found = True
                         self.points = [p1, p2, p3]
                         self.update_all()
