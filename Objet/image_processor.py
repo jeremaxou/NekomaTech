@@ -68,7 +68,7 @@ class ImageProcessing:
     def background_method(self):
         '''Traite une paire de frames pour détecter les balles''' 
         self.background_difference()
-        self.open_if_openable(10, (5, 5), (23, 23))
+        self.open_if_openable(1, (5, 5), (23, 23))
         contours, _ = cv2.findContours(self.processed_frame_difference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)      
         all_ball = self.find_circles(contours)
         return all_ball
@@ -112,8 +112,19 @@ class ImageProcessing:
         self.processed_frame_difference = frame
 
     def open_if_openable(self, white_thresh, ero, dila):
-        total_pixels = self.unprocessed_frame_difference.size
-        white_pixels = cv2.countNonZero(self.unprocessed_frame_difference)
+        def get_pos(name):
+            return self.param.get_point(name).pos_int()
+
+        # Définir les coordonnées de la ROI
+        y1, y2 = 0, min(self.param.height, get_pos("net")[1])
+        x1, x2 = max(0, get_pos("ant_tl")[0] - 50), min(self.param.width, get_pos("ant_tr")[0] + 50)
+
+        # Extraire la ROI à partir de l'image non traitée
+        roi = self.unprocessed_frame_difference[y1:y2, x1:x2]
+
+        # Calculer le pourcentage de pixels blancs uniquement dans la ROI
+        total_pixels = roi.size
+        white_pixels = cv2.countNonZero(roi)
         white_percentage = (white_pixels / total_pixels) * 100
         if white_percentage < white_thresh:
             self.open(ero, dila)

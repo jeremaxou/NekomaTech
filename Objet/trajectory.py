@@ -13,7 +13,7 @@ class Trajectory:
         self.is_up = False
         self.is_down = False
         self.is_over = False
-        self.was_left = False
+        self.original_direction = "Vertical"
         self.is_precise = False
         self.is_high = False
         self.no_ball_frame = 0
@@ -22,6 +22,7 @@ class Trajectory:
         self.start_traj = 0
         self.highest = 0
         self.horizontal_flag = False
+        self.poly = [0, 0, 0]
 
     
     def update(self, all_ball, current_frame):
@@ -57,7 +58,13 @@ class Trajectory:
     def update_is_up(self):
         if not self.is_up and self.points[-3].y > self.points[-2].y and self.points[-2].y > self.points[-1].y and (self.is_left() or self.is_right()):
             self.is_up = True
-            self.was_left = self.is_left()
+            print(abs(self.points[-3].x - self.points[-1].x))
+            if abs(self.points[-3].x - self.points[-1].x) < 5:
+                self.original_direction = "Vertical"
+            elif self.is_left():
+                self.original_direction = "Left"
+            else:
+                self.original_direction = "Right"
             self.start_traj = len(self.points) - 2
     
     def update_is_down(self):
@@ -71,11 +78,15 @@ class Trajectory:
             self.points.remove(self.points[-1])
             return
 
-        if ((self.was_left and self.is_right()) or (not self.was_left and self.is_left())):#and self.horizontal_flag:
+        if ((self.original_direction == "Left" and self.is_right()) or (self.original_direction == "Right" and self.is_left())):#and self.horizontal_flag:
             self.is_over = True
             self.points.remove(self.points[-1])
             self.points.remove(self.points[-1])
             return
+
+        '''if self.poly[0] < 0 and len(self.points) > 5:
+            self.is_over = True
+            return'''
 
         #if (self.is_up and self.no_ball_frame > 10) or (not self.is_up and self.no_ball_frame > 1):
         if self.no_ball_frame > 1:
@@ -107,20 +118,24 @@ class Trajectory:
             
     
     def update_poly(self):
-        with warnings.catch_warnings():
-            from numpy.polynomial.polyutils import RankWarning
-            warnings.simplefilter("ignore", RankWarning)
-            self.poly = np.polyfit([self.points[i].x for i in range(self.start_traj, len(self.points))], [self.points[i].y for i in range(self.start_traj, len(self.points))], 2, rcond=1e-5)
+        x = np.array([self.points[i].x for i in range(self.start_traj, len(self.points))])
+        y = np.array([self.points[i].y for i in range(self.start_traj, len(self.points))])
+        self.x_mean = np.mean(x)
+        x_scaled = x - self.x_mean
+        if len(x) < 3:
+            self.poly = [0] + list(np.polyfit(x_scaled, y, 1, rcond=1e-5))
+        else:
+            self.poly = np.polyfit(x_scaled, y, 2, rcond=1e-5)
 
         self.parabola = []
         liste = np.linspace(self.points[self.start_traj].x, self.points[-1].x, int(abs(self.points[-1].x - self.points[self.start_traj].x))+1)
         liste = liste.tolist()
         dx = 1
-        while not self.was_left and self.eva_poly(liste[0] - (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
+        while self.original_direction == "Right" and self.eva_poly(liste[0] - (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
             liste.insert(0, liste[0] - dx)
             dx += 1
         dx = 1
-        while self.was_left and self.eva_poly(liste[0] + (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
+        while self.original_direction == "Left" and self.eva_poly(liste[0] + (dx+1)) < self.param.get_point_y("net") - 20 and self.poly[0] > 0:
             liste.insert(0, liste[0] + dx)
             dx += 1
         for i in range(len(liste)):
@@ -222,7 +237,7 @@ class Trajectory:
 
     def eva_poly(self, x):
         '''retourne le polynôme évalué en un point'''
-        return self.poly[0]*(x**2)+self.poly[1]*x+self.poly[2]
+        return self.poly[0]*((x-self.x_mean)**2)+self.poly[1]*(x-self.x_mean)+self.poly[2]
     
     def update_color(self):
         if self.is_precise and self.is_high:

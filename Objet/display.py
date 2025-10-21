@@ -112,10 +112,10 @@ class Display():
         self.draw_shape(brightness)
         self.draw_all_points(brightness)     
         self.draw_traj()  
-        #self.draw_balls(list_ball)
-        #self.draw_point_traj()
+        self.draw_balls(list_ball)
+        self.draw_point_traj()
         #cv2.putText(self.frame, str(len(self.traj.points)) +" "+ str(self.traj.start_traj) + " " + str(self.traj.no_ball_frame), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        #cv2.putText(self.frame, f'Frame: {current_frame}', (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(self.frame, str(len(self.traj.points_before)), (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow('main', self.frame)
     
     

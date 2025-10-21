@@ -25,7 +25,7 @@ class VideoManager:
             self.cap = cv2.VideoCapture(self.list_cameras[self.index])
 
         self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-        #self.fps = 3
+        self.fps = 3
         self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.over = False
         self.parameters = parameters
