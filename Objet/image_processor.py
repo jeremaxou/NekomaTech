@@ -67,8 +67,9 @@ class ImageProcessing:
 
     def background_method(self):
         '''Traite une paire de frames pour détecter les balles''' 
-        self.background_difference()
-        self.open_if_openable(1, (5, 5), (23, 23))
+        #self.background_difference()
+        self.frame_difference()
+        self.open_if_openable(0.5, (5, 5), (23, 23))
         contours, _ = cv2.findContours(self.processed_frame_difference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)      
         all_ball = self.find_circles(contours)
         return all_ball

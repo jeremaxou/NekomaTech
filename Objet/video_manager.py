@@ -25,7 +25,8 @@ class VideoManager:
             self.cap = cv2.VideoCapture(self.list_cameras[self.index])
 
         self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-        self.fps = 3
+        #self.fps = 3
+        self.fps_type = "real"
         self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.over = False
         self.parameters = parameters
@@ -133,6 +134,13 @@ class VideoManager:
     def stop(self):
         self.over = True
 
+    def change_fps(self):
+        if self.fps_type == "real":
+            self.fps_type = "fixed"
+            self.fps = 3
+        else:
+            self.fps_type = "real"
+            self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
     
 if __name__ == "__main__":
     subprocess.run(["python", "Objet/Main.py"])

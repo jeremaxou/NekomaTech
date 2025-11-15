@@ -53,7 +53,7 @@ class Main:
                     self.traj.update(all_ball, self.vid_mana.current_frame) 
                     if self.traj.is_over:
                         self.session.load_traj(self.traj)
-                        self.traj = Trajectory(self.param)
+                        self.traj = Trajectory(self.param, self.traj.get_3_last_points())
                         self.display.load_traj(self.traj)
                         self.session.next_video()
             elif self.mode == "parameters":
@@ -68,7 +68,7 @@ class Main:
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main = Main("vid3.mp4", "video")
+    main = Main("vid4.mp4", "video")
     main.run()
 
 def is_ready():

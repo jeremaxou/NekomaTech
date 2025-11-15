@@ -108,12 +108,17 @@ class Display():
             else :
                 cv2.circle(self.frame, self.traj.points[i].pos_int(), 3, (255, 255, 255), 3, lineType=cv2.LINE_AA)
     
+    def draw_points_before(self):
+        for i in range(len(self.traj.points_before)):
+            cv2.circle(self.frame, self.traj.points_before[i][0].pos_int(), 3, (255, 0, 255), 3, lineType=cv2.LINE_AA)
+
     def display(self, brightness, list_ball, current_frame = None):
         self.draw_shape(brightness)
         self.draw_all_points(brightness)     
         self.draw_traj()  
-        self.draw_balls(list_ball)
-        self.draw_point_traj()
+        #self.draw_balls(list_ball)
+        #self.draw_point_traj()
+        #self.draw_points_before()
         #cv2.putText(self.frame, str(len(self.traj.points)) +" "+ str(self.traj.start_traj) + " " + str(self.traj.no_ball_frame), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         cv2.putText(self.frame, str(len(self.traj.points_before)), (10, self.param.height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow('main', self.frame)

@@ -32,7 +32,10 @@ def update(key, vid_mana, session, ui, param, prev_mode, mode):
         vid_mana.next_camera()
 
     if key == ord('b'):
-        vid_mana.prev_camera()      
+        vid_mana.prev_camera()     
+
+    if key == ord('f'):
+        vid_mana.change_fps()  
 
     return prev_mode, mode
 
